@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { EMAIL_MAX, PASSWORD_MAX_BYTES } from '@/lib/auth/constants'
 import { normalizeEmail, verifyAgainstDummy, verifyPassword } from '@/lib/auth/password'
-import { createSession } from '@/lib/auth/session'
+import { createSession, destroySession } from '@/lib/auth/session'
 import {
     clearRateLimit, clientIp, consumeRateLimit, LIMITS, refundRateLimit,
 } from '@/lib/auth/rate-limit'
@@ -28,14 +28,19 @@ export async function POST(request: NextRequest) {
         // Counted BEFORE the password is checked (see rate-limit.ts). IP first,
         // so a blocked IP stops burning the account's budget.
         const ipHit = await consumeRateLimit(LIMITS.loginFailIp, [ip])
-        const emailHit = ipHit.allowed
+        const emailIpHit = ipHit.allowed
+            ? await consumeRateLimit(LIMITS.loginFailEmailIp, [normalizedEmail, ip])
+            : null
+        const emailHit = emailIpHit?.allowed
             ? await consumeRateLimit(LIMITS.loginFailEmail, [normalizedEmail])
             : null
-        if (!ipHit.allowed || !emailHit?.allowed) {
-            const retryAfter = ipHit.allowed ? emailHit!.retryAfterSec : ipHit.retryAfterSec
+        // Later checks only run when the earlier one allowed, so the first
+        // refusal in this list is the limit that blocked the attempt.
+        const refused = [ipHit, emailIpHit, emailHit].find((hit) => hit && !hit.allowed)
+        if (refused) {
             return NextResponse.json(
                 { error: 'too_many_attempts' },
-                { status: 429, headers: { 'Retry-After': String(retryAfter) } },
+                { status: 429, headers: { 'Retry-After': String(refused.retryAfterSec) } },
             )
         }
 
@@ -56,8 +61,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
         }
 
-        await clearRateLimit(LIMITS.loginFailEmail, [normalizedEmail])
+        await clearRateLimit(LIMITS.loginFailEmailIp, [normalizedEmail, ip])
+        await refundRateLimit(LIMITS.loginFailEmail, [normalizedEmail])
         await refundRateLimit(LIMITS.loginFailIp, [ip])
+        await destroySession() // drop any older session this browser still had
         await createSession(user.id)
 
         return NextResponse.json({ email: user.email })

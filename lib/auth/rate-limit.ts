@@ -23,10 +23,14 @@ export interface Limit {
 const MINUTE = 60_000
 
 export const LIMITS = {
-    // Failed logins for one email, from ANY IP. Every attempt is counted up
+    // Failed logins for one email FROM ONE IP. Every attempt is counted up
     // front and a success clears it, so effectively only failures add up.
-    // Single-admin hub: this is a global brute-force cap on Kilian's account.
-    loginFailEmail: { bucket: 'login-fail-email', max: 5, windowMs: 15 * MINUTE },
+    // Keyed on email+IP so a stranger who knows the admin email can't lock
+    // Kilian out from another network.
+    loginFailEmailIp: { bucket: 'login-fail-email-ip', max: 5, windowMs: 15 * MINUTE },
+    // Loose backstop per email across ALL IPs (a distributed attack). bcrypt
+    // cost 12 + a 12+ char password already make guessing hopeless.
+    loginFailEmail: { bucket: 'login-fail-email', max: 100, windowMs: 60 * MINUTE },
     // Login attempts from one IP across all emails. A success refunds only its
     // own hit (one valid login must not reset an attacker's budget).
     loginFailIp: { bucket: 'login-fail-ip', max: 20, windowMs: 15 * MINUTE },
