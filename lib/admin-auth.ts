@@ -1,4 +1,11 @@
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
+
+// Hash both sides to a fixed 32 bytes, so timingSafeEqual never throws on a
+// length mismatch and the comparison time doesn't leak the key's length.
+function sha256(value: string): Buffer {
+    return createHash('sha256').update(value).digest()
+}
 
 export function validateAdminKey(request: NextRequest): NextResponse | null {
     const adminKey = request.headers.get('x-admin-key')
@@ -19,7 +26,7 @@ export function validateAdminKey(request: NextRequest): NextResponse | null {
         )
     }
 
-    if (adminKey !== expectedKey) {
+    if (!timingSafeEqual(sha256(adminKey), sha256(expectedKey))) {
         return NextResponse.json(
             { error: 'Invalid admin API key' },
             { status: 403 }

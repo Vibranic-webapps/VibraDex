@@ -62,23 +62,40 @@ model MetricSnapshot {
   @@index([metricKey])
 }
 
+// The single admin (Kilian). Created/reset only via `npm run admin:create`;
+// there is no public sign-up.
 model User {
-  id              String   @id @default(cuid())
-  email           String?  @unique
-  firstName       String?
-  lastName        String?
-  profileImageUrl String?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions Session[]
 }
 
+// One row per login. Only the SHA-256 of the cookie token is stored.
 model Session {
-  sid     String   @id
-  sess    Json
-  expire  DateTime
-  
-  @@index([expire])
+  id          String   @id @default(cuid())
+  hashedToken String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Fixed-window rate-limit counters (login brute-force protection).
+// Postgres-backed because serverless instances share no memory.
+model RateLimit {
+  key         String   @id // "<bucket>:<sha256>"
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart]) // for the sweep of stale rows
 }
 
 model UptimeRecord {
