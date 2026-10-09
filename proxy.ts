@@ -13,7 +13,11 @@ const isKeyAuthenticated = createRouteMatcher([
 // /api/admin/*) is Kilian-only: no session -> sign-in redirect for pages,
 // 404 for API calls.
 export default clerkMiddleware(async (auth, request) => {
-  if (!isKeyAuthenticated(request)) {
+  // /api/diagnostics/* only checks the app key on POST; its GET handlers read
+  // every app's events/metrics with no key at all, so reads stay Kilian-only.
+  const isDiagnosticsRead =
+    request.nextUrl.pathname.startsWith('/api/diagnostics/') && request.method !== 'POST'
+  if (!isKeyAuthenticated(request) || isDiagnosticsRead) {
     await auth.protect()
   }
 })
