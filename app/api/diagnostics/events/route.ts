@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendPush } from '@/lib/push'
+import { requireSession } from '@/lib/auth/session'
 
 // Does an incoming event satisfy an alert's condition?
 function alertMatches(
@@ -123,6 +124,9 @@ export async function POST(request: NextRequest) {
 
 // GET /api/diagnostics/events?appId=xxx&limit=50
 export async function GET(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { searchParams } = new URL(request.url)
         const appId = searchParams.get('appId')

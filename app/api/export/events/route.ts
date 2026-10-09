@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 export async function GET(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const searchParams = request.nextUrl.searchParams
     const appId = searchParams.get('appId')
     const severity = searchParams.get('severity')
