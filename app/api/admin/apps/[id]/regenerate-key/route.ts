@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
+import { requireSession } from '@/lib/auth/session'
 
 type Props = {
     params: Promise<{ id: string }>
 }
 
 export async function POST(request: NextRequest, { params }: Props) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { id } = await params
 

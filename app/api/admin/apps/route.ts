@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
+import { requireSession } from '@/lib/auth/session'
 
 export async function GET() {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const apps = await prisma.app.findMany({
             orderBy: { createdAt: 'desc' },
@@ -28,6 +32,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const body = await request.json()
         const { name, description, externalUrl, iconUrl } = body

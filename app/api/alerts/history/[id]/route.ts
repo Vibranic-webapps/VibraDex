@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 // PATCH /api/alerts/history/[id] — mark as resolved
 export async function PATCH(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const { id } = await params
 
     try {

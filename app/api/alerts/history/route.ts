@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 // GET /api/alerts/history?since=<ISO date>
 export async function GET(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { searchParams } = new URL(request.url)
         const since = searchParams.get('since')

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ appId: string }> }
 ) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const { appId } = await params
     const searchParams = request.nextUrl.searchParams
     const timeRange = searchParams.get('timeRange') || '7d'

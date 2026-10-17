@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 export async function GET() {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const alerts = await prisma.alert.findMany({
             include: {
@@ -18,6 +22,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const body = await request.json()
         const { name, appId, condition, severity, keyword } = body

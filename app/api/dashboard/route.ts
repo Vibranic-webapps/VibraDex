@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDashboardStats, getRecentEvents, getEventsOverTime, getAppsWithStatus } from '@/lib/db/queries'
+import { requireSession } from '@/lib/auth/session'
 
 export async function GET(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const searchParams = request.nextUrl.searchParams
     const timeRange = searchParams.get('timeRange') || '24h'
     
