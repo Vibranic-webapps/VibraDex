@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 type Props = {
     params: Promise<{ id: string }>
 }
 
 export async function GET(request: NextRequest, { params }: Props) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { id } = await params
 
@@ -40,6 +44,9 @@ export async function GET(request: NextRequest, { params }: Props) {
 }
 
 export async function PATCH(request: NextRequest, { params }: Props) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { id } = await params
         const body = await request.json()
@@ -78,6 +85,9 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Props) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { id } = await params
 

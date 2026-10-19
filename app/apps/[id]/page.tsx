@@ -1,3 +1,4 @@
+import { requirePageSession } from "@/lib/auth/session"
 import { notFound } from "next/navigation"
 import { getAppById } from "@/lib/db/queries"
 import { AppDetailView } from "@/components/dashboard/app-detail-view"
@@ -9,6 +10,7 @@ type Props = {
 }
 
 export default async function AppDetailPage({ params }: Props) {
+  await requirePageSession()
   const { id } = await params
   const app = await getAppById(id)
 

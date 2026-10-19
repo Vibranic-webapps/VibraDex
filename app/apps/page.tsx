@@ -1,9 +1,11 @@
+import { requirePageSession } from "@/lib/auth/session"
 import { getAppsWithStatus } from "@/lib/db/queries"
 import { AppCard } from "@/components/dashboard/app-card"
 
 export const dynamic = 'force-dynamic'
 
 export default async function AppsPage() {
+  await requirePageSession()
   const apps = await getAppsWithStatus()
 
   const appsForCards = apps.map(app => ({

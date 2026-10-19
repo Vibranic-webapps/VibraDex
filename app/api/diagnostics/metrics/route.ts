@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 // POST /api/diagnostics/metrics
 export async function POST(request: NextRequest) {
@@ -72,6 +73,9 @@ export async function POST(request: NextRequest) {
 
 // GET /api/diagnostics/metrics?appId=xxx&metricKey=xxx&hours=24
 export async function GET(request: NextRequest) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     try {
         const { searchParams } = new URL(request.url)
         const appId = searchParams.get('appId')
