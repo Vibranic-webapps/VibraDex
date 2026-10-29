@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start -H 0.0.0.0 -p 5000",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
@@ -55,6 +57,7 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

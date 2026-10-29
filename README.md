@@ -65,6 +65,8 @@ npm install
 #   ISSUER_URL=...        (OpenID issuer URL)
 #   REPL_ID=...           (auth client id)
 #   ADMIN_API_KEY=...     (admin access key)
+#   HUB_READ_KEY=...      (optional, >= 32 chars: lets the Pi Hub logger read GET /api/hub/alerts; unset = that route is 404)
+#                         generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 
 # 4. Database
 npm run db:generate   # prisma generate
