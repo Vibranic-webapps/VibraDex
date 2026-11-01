@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { usePullRefresh } from "@/components/pull-to-refresh"
 import { EventsTableClient } from "@/components/dashboard/events-table-client"
 import { TimeRangeSelect } from "@/components/time-range-select"
 import { ExportButton } from "@/components/export-button"
@@ -54,6 +55,16 @@ export default function EventsPage() {
     const interval = setInterval(fetchEvents, 30000)
     return () => clearInterval(interval)
   }, [fetchEvents])
+
+  // Pull-to-refresh: refetch the log (throws when the hub can't be reached).
+  usePullRefresh(async () => {
+    const response = await fetch(`/api/events?timeRange=${timeRange}`)
+    if (!response.ok) throw new Error("events refresh failed")
+    const data = await response.json()
+    setEvents(data.events)
+    setApps(data.apps)
+    setLastUpdated(new Date())
+  })
 
   return (
     <div className="space-y-6">

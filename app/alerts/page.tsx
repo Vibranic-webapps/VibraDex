@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { usePullRefresh } from "@/components/pull-to-refresh"
 import { subscribeToPush, registerServiceWorker } from "@/lib/push-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -139,7 +140,8 @@ export default function AlertsPage() {
     }
   }
 
-  const fetchAlerts = async () => {
+  /** Resolves true when both lists loaded (pull-to-refresh needs to know). */
+  const fetchAlerts = async (): Promise<boolean> => {
     try {
       const [alertsRes, appsRes] = await Promise.all([
         fetch("/api/alerts"),
@@ -153,14 +155,17 @@ export default function AlertsPage() {
         const data = await appsRes.json()
         setApps(Array.isArray(data) ? data : [])
       }
+      return alertsRes.ok && appsRes.ok
     } catch (error) {
       console.error("Failed to fetch alerts:", error)
+      return false
     } finally {
       setIsLoading(false)
     }
   }
 
-  const fetchHistory = async (isInitial = false) => {
+  /** Resolves true when the request worked, even if nothing was new. */
+  const fetchHistory = async (isInitial = false): Promise<boolean> => {
     try {
       // On polling (not initial load), only ask for entries newer than last seen
       const url = !isInitial && latestSeenAt.current
@@ -168,10 +173,10 @@ export default function AlertsPage() {
         : "/api/alerts/history"
 
       const res = await fetch(url)
-      if (!res.ok) return
+      if (!res.ok) return false
 
       const data: HistoryEntry[] = await res.json()
-      if (!Array.isArray(data) || data.length === 0) return
+      if (!Array.isArray(data) || data.length === 0) return true
 
       if (isInitial) {
         setHistory(data)
@@ -190,8 +195,10 @@ export default function AlertsPage() {
         setHistory((prev) => [...data, ...prev].slice(0, 50))
         latestSeenAt.current = data[0].triggeredAt
       }
+      return true
     } catch (error) {
       console.error("Failed to fetch alert history:", error)
+      return false
     }
   }
 
@@ -202,6 +209,13 @@ export default function AlertsPage() {
     }
     void load()
   }, [])
+
+  // Pull-to-refresh: reload the rules and pick up any new triggers. Uses the polling variant of
+  // the history fetch (only entries newer than the last seen), so old alerts are not notified again.
+  usePullRefresh(async () => {
+    const results = await Promise.all([fetchAlerts(), fetchHistory(false)])
+    if (results.some((ok) => !ok)) throw new Error("alerts refresh failed")
+  })
 
   // Poll history every 30s for new triggers
   useEffect(() => {
