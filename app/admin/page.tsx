@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePullRefresh } from '@/components/pull-to-refresh'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,17 +64,26 @@ export default function AdminDashboard() {
         fetchApps()
     }, [])
 
-    const fetchApps = async () => {
+    /** Resolves true when the list loaded (pull-to-refresh needs to know). */
+    const fetchApps = async (): Promise<boolean> => {
         try {
             const response = await fetch('/api/admin/apps')
+            if (!response.ok) return false
             const data = await response.json()
             setApps(data.apps || [])
+            return true
         } catch (error) {
             console.error('Failed to fetch apps:', error)
+            return false
         } finally {
             setLoading(false)
         }
     }
+
+    // Pull-to-refresh: reload the app list (the add/edit forms are left alone).
+    usePullRefresh(async () => {
+        if (!(await fetchApps())) throw new Error('admin refresh failed')
+    })
 
     const handleAddApp = async () => {
         if (!formData.name || !formData.externalUrl) return

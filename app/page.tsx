@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePullRefresh } from "@/components/pull-to-refresh"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { EventsChart } from "@/components/dashboard/events-chart"
 import { RecentEvents } from "@/components/dashboard/recent-events"
@@ -59,6 +60,14 @@ export default function DashboardPage() {
     const interval = setInterval(() => void fetchDashboard(), 30000)
     return () => clearInterval(interval)
   }, [timeRange, refreshTrigger])
+
+  // Pull-to-refresh: refetch the numbers (throws when the hub can't be reached).
+  usePullRefresh(async () => {
+    const response = await fetch(`/api/dashboard?timeRange=${timeRange}`)
+    if (!response.ok) throw new Error("dashboard refresh failed")
+    setData(await response.json())
+    setLastUpdated(new Date())
+  })
 
   if (isLoading || !data) {
     return (
