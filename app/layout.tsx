@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PullToRefresh } from "@/components/pull-to-refresh"
 
 const jetbrainsMono = JetBrains_Mono({subsets:['latin'],variable:'--font-sans'});
 
@@ -45,9 +46,9 @@ export default function RootLayout({
 
               <div className="flex flex-col flex-1">
                 <Topbar />
-                <main className="flex-1 overflow-auto p-6">
+                <PullToRefresh className="flex-1 overflow-auto p-6">
                   {children}
-                </main>
+                </PullToRefresh>
               </div>
             </div>
           </ThemeProvider>
