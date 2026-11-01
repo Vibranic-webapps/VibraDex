@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession } from "@/lib/auth/session";
 
 // Store (or refresh) a browser Web Push subscription.
 export async function POST(request: NextRequest) {
+    const guard = await requireSession();
+    if (!guard.ok) return guard.response;
+
     try {
         const sub = await request.json();
         const endpoint: string | undefined = sub?.endpoint;

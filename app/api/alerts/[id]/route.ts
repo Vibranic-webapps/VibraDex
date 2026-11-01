@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth/session'
 
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const { id } = await params
     
     try {
@@ -29,6 +33,9 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const guard = await requireSession()
+    if (!guard.ok) return guard.response
+
     const { id } = await params
     
     try {
