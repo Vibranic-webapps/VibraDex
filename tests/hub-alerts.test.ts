@@ -175,8 +175,9 @@ describe('every other API route keeps its own protection', () => {
     }
     walk(root)
 
-    // Intentionally without a session guard: they create or end a session, or report "no session".
-    const OPEN = new Set(['auth/login', 'auth/logout', 'auth/expired'])
+    // Intentionally without a session guard: they create or end a session, or report "no session",
+    // or (health) answer the Pi's uptime check with a bare ok/down and no data (lib/health.ts).
+    const OPEN = new Set(['auth/login', 'auth/logout', 'auth/expired', 'health'])
     const GUARD = /requireSession|validateAdminKey|x-api-key|getSession|configuredHubKey/
 
     it('finds the routes', () => expect(files.length).toBeGreaterThan(15))
