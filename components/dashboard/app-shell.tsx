@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Topbar } from "@/components/dashboard/topbar"
+import { PullToRefresh } from "@/components/pull-to-refresh"
 
 // Pages that render on their own, without the dashboard chrome.
 const BARE_PAGES = ["/login"]
@@ -19,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex flex-col flex-1">
         <Topbar />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <PullToRefresh className="flex-1 overflow-auto p-6">{children}</PullToRefresh>
       </div>
     </div>
   )
